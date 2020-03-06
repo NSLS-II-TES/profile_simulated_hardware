@@ -237,20 +237,16 @@ params_to_change.append({sample_stage.x.name: 60,
 # RE(bp.fly([hf]))
 
 
-def calc_velocity(motors, dists, velocity_limits, max_velocity=None):
-    #TODO: finish testing/debugging this)
-
-    # TODO: update this to handle a max velocity
+def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocity=None):
     ret_vels = []
-    # if any([velocity_limits[i][1] == 0 for i in range(len(velocity_limits))]):
-    #     # make sure all motors have upper limits > 0
-    #     raise ValueError("Upper velocity limit must be > 0 for every motor.")
+    # check that max_velocity is not None if at least 1 motor doesn't have upper velocity limit
+    if any([velocity_limits[i]['high'] == 0 for i in range(len(velocity_limits))]) and max_velocity is None:
+        raise ValueError('max_velocity must be set if there is at least 1 motor without upper velocity limit')
     if all([d == 0 for d in dists]):
         # TODO: fix this to handle when motors don't need to move
         # if dists are all 0, set all motors to min velocity
-        print()
         for i in range(len(velocity_limits)):
-            ret_vels.append(velocity_limits[i][0])
+            ret_vels.append(velocity_limits[i]['low'])
         return ret_vels
     else:
         # check for negative distances
@@ -259,28 +255,34 @@ def calc_velocity(motors, dists, velocity_limits, max_velocity=None):
         # create list of upper velocity limits for convenience
         upper_velocity_bounds = []
         for j in range(len(velocity_limits)):
-            upper_velocity_bounds.append(velocity_limits[j][1])
-        # find max distance to move
-        max_dist = np.max(dists)
-        max_dist_index = dists.index(max_dist)
-        max_dist_vel = upper_velocity_bounds[max_dist_index]
+            upper_velocity_bounds.append(velocity_limits[j]['high'])
+        # find max distances to move and pick the slowest motor of those with max dists
+        max_dist_lowest_vel = np.where(dists == np.max(dists))[0]
+        max_dist_to_move = -1
+        for j in max_dist_lowest_vel:
+            if dists[j] >= max_dist_to_move:
+                max_dist_to_move = dists[j]
+                motor_index_to_use = j
+        max_dist_vel = upper_velocity_bounds[motor_index_to_use]
         if max_velocity is not None:
             if max_dist_vel > max_velocity or max_dist_vel == 0:
                 max_dist_vel = float(max_velocity)
-        time_needed = dists[max_dist_index] / max_dist_vel
+        time_needed = dists[motor_index_to_use] / max_dist_vel
         for i in range(len(velocity_limits)):
-            if i != max_dist_index:
+            if i != motor_index_to_use:
                 try_vel = np.round(dists[i] / time_needed, 1)
-                if try_vel < velocity_limits[i][0]:
-                    try_vel = velocity_limits[i][0]
-                elif try_vel > velocity_limits[i][1]:
-                    if all([upper_vel == 0 for upper_vel in upper_velocity_bounds]):
-                        ret_vels.append(try_vel)
+                if try_vel < min_velocity:
+                    try_vel = min_velocity
+                if try_vel < velocity_limits[i]['low']:
+                    try_vel = velocity_limits[i]['low']
+                elif try_vel > velocity_limits[i]['high']:
+                    if upper_velocity_bounds[i] == 0:
+                        pass
                     else:
                         break
                 ret_vels.append(try_vel)
             else:
-                ret_vels.append(velocity_limits[max_dist_index][1])
+                ret_vels.append(max_dist_vel)
         if len(ret_vels) == len(motors):
             # if all velocities work, return velocities
             return ret_vels
@@ -288,14 +290,11 @@ def calc_velocity(motors, dists, velocity_limits, max_velocity=None):
             # use slowest motor that moves the most
             ret_vels.clear()
             lowest_velocity_motors = np.where(upper_velocity_bounds == np.min(upper_velocity_bounds))[0]
-            if len(lowest_velocity_motors) == 1:
-                motor_index_to_use = lowest_velocity_motors[0]
-            else:
-                max_dist_to_move = -1
-                for k in lowest_velocity_motors:
-                    if dists[k] >= max_dist_to_move:
-                        max_dist_to_move = dists[k]
-                        motor_index_to_use = k
+            max_dist_to_move = -1
+            for k in lowest_velocity_motors:
+                if dists[k] >= max_dist_to_move:
+                    max_dist_to_move = dists[k]
+                    motor_index_to_use = k
             slow_motor_vel = upper_velocity_bounds[motor_index_to_use]
             if max_velocity is not None:
                 if slow_motor_vel > max_velocity or slow_motor_vel == 0:
@@ -304,17 +303,19 @@ def calc_velocity(motors, dists, velocity_limits, max_velocity=None):
             for k in range(len(velocity_limits)):
                 if k != motor_index_to_use:
                     try_vel = np.round(dists[k] / time_needed, 1)
-                    if try_vel < velocity_limits[k][0]:
-                        try_vel = velocity_limits[k][0]
-                    elif try_vel > velocity_limits[k][1]:
-                        if all([upper_vel == 0 for upper_vel in upper_velocity_bounds]):
-                            ret_vels.append(try_vel)
+                    if try_vel < min_velocity:
+                        try_vel = min_velocity
+                    if try_vel < velocity_limits[k]['low']:
+                        try_vel = velocity_limits[k]['low']
+                    elif try_vel > velocity_limits[k]['high']:
+                        if upper_velocity_bounds[k] == 0:
+                            pass
                         else:
                             print("Don't want to be here")
                             raise ValueError("Something terribly wrong happened")
                     ret_vels.append(try_vel)
                 else:
-                    ret_vels.append(upper_velocity_bounds[motor_index_to_use])
+                    ret_vels.append(slow_motor_vel)
             return ret_vels
 
 
@@ -331,13 +332,19 @@ def optimize():
         velocity_limits = []
         if i == 0:
             for motor_name, motor_obj in motors.items():
-                velocity_limits.append(tuple(motor_obj.velocity.limits))
+                velocity_limit_dict = {'motor': motor_name,
+                                       'low': motor_obj.velocity.low_limit,
+                                       'high': motor_obj.velocity.high_limit}
+                velocity_limits.append(velocity_limit_dict)
                 dists.append(abs(param[motor_name] - motor_obj.user_readback.get()))
         else:
             for motor_name, motor_obj in motors.items():
-                velocity_limits.append(tuple(motor_obj.velocity.limits))
+                velocity_limit_dict = {'motor': motor_name,
+                                       'low': motor_obj.velocity.low_limit,
+                                       'high': motor_obj.velocity.high_limit}
+                velocity_limits.append(velocity_limit_dict)
                 dists.append(abs(param[motor_name] - params_to_change[i - 1][motor_name]))
-        velocities = calc_velocity(motors.keys(), dists, velocity_limits, max_velocity=5)
+        velocities = calc_velocity(motors.keys(), dists, velocity_limits, max_velocity=9.6, min_velocity=1)
         if velocities is None:
             velocities = [5.0, 5.0, 5.0]
         for motor_name, vel, dist in zip(motors, velocities, dists):
@@ -345,6 +352,8 @@ def optimize():
             distances_dict[motor_name] = dist
         velocities_list.append(velocities_dict)
         distances_list.append(distances_dict)
+
+    print('VELOCITY LIMITS', velocity_limits)
 
     # Validation
     times_list = []
