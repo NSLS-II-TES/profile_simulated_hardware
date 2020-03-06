@@ -91,7 +91,7 @@ class HardwareFlyer(BlueskyFlyer):
         #
         # ZeroDivisionError: float division by zero
         for motor_name, motor_obj in self.motors.items():
-            motor_obj.velocity.put(self.velocities[motor_name] / 20)
+            motor_obj.velocity.put(self.velocities[motor_name])
 
         for motor_name, motor_obj in self.motors.items():
             if motor_name == slowest_motor:
@@ -176,17 +176,6 @@ class HardwareFlyer(BlueskyFlyer):
 
 params_to_change = []
 
-from ophyd import (EpicsSignal, EpicsMotor, Device, Component as Cpt)
-
-
-class SampleStage(Device):
-    x = Cpt(EpicsMotor, '1')
-    y = Cpt(EpicsMotor, '2')
-    z = Cpt(EpicsMotor, '3')
-
-
-sample_stage = SampleStage('IOC:m', name='sample_stage')
-
 motors = {sample_stage.x.name: sample_stage.x,
           sample_stage.y.name: sample_stage.y,
           sample_stage.z.name: sample_stage.z,}
@@ -231,16 +220,16 @@ Out[11]: 22.22
 # params_to_change.append({sample_stage.x.name: 71,
 #                          sample_stage.y.name: 39,
 #                          sample_stage.z.name: 22.9})
-params_to_change.append({sample_stage.x.name: 20,
-                         sample_stage.y.name: 10,
-                         sample_stage.z.name: 35})
+params_to_change.append({sample_stage.x.name: 100,
+                         sample_stage.y.name: 80,
+                         sample_stage.z.name: 0})
 
 params_to_change.append({sample_stage.x.name: 40,
-                         sample_stage.y.name: 40,
+                         sample_stage.y.name: 30,
                          sample_stage.z.name: 50})
 
 params_to_change.append({sample_stage.x.name: 60,
-                         sample_stage.y.name: 70,
+                         sample_stage.y.name: 100,
                          sample_stage.z.name: 10})
 
 # update function - change params
@@ -350,7 +339,7 @@ def optimize():
                 dists.append(abs(param[motor_name] - params_to_change[i - 1][motor_name]))
         velocities = calc_velocity(motors.keys(), dists, velocity_limits, max_velocity=5)
         if velocities is None:
-            velocities = [.5, .5, .5]
+            velocities = [5.0, 5.0, 5.0]
         for motor_name, vel, dist in zip(motors, velocities, dists):
             velocities_dict[motor_name] = vel
             distances_dict[motor_name] = dist
@@ -404,12 +393,9 @@ def optimize():
                            velocities=vel,
                            time_to_travel=time_,
                            detector=None, motors=motors)
-        # yield from bp.fly([hf])
+        yield from bp.fly([hf])
 
         hf_flyers.append(hf)
-
-
-optimize()
 
 
 def move_back():
