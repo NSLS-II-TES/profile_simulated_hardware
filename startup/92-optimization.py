@@ -7,7 +7,6 @@ from collections import deque
 from ophyd.sim import NullStatus, new_uid
 
 import numpy as np
-import random
 
 
 class BlueskyFlyer:
@@ -77,6 +76,7 @@ class HardwareFlyer(BlueskyFlyer):
         # self.detector.settings.num_images.put(10000)
         # self.detector.settings.acquire_time.put(0.05)
         # self.detector.settings.acquire.put(1)
+        start_detector(self.detector)
 
         # Call this function once before we start moving all motors to collect the first points.
         self._watch_function()
@@ -105,6 +105,7 @@ class HardwareFlyer(BlueskyFlyer):
 
     def complete(self):
         # all motors arrived
+        stop_detector(self.detector)
         return self.motor_move_status
 
     def describe_collect(self):
@@ -168,7 +169,8 @@ class HardwareFlyer(BlueskyFlyer):
 
     def _watch_function(self, *args, **kwargs):
         # self.watch_intensities.append(self.detector.channel1.rois.roi01.value.get())
-        self.watch_intensities.append(random.randint(0, 100))
+        # self.watch_intensities.append(random.randint(0, 100))
+        self.watch_intensities.append(read_detector(self.detector))
         for motor_name, motor_obj in self.motors.items():
             self.watch_positions[motor_name].append(motor_obj.user_readback.get())
         self.watch_timestamps.append(ttime.time())
