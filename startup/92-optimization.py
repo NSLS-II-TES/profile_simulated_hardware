@@ -237,8 +237,13 @@ params_to_change.append({sample_stage.x.name: 47,
 def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocity=None):
     ret_vels = []
     # check that max_velocity is not None if at least 1 motor doesn't have upper velocity limit
-    if any([velocity_limits[i]['high'] == 0 for i in range(len(velocity_limits))]) and max_velocity is None:
-        raise ValueError('max_velocity must be set if there is at least 1 motor without upper velocity limit')
+    if any([lim['high'] == 0 for lim in velocity_limits]) and max_velocity is None:
+        vel_max_lim_0 = []
+        for lim in velocity_limits:
+            if lim['high'] == 0:
+                vel_max_lim_0.append(lim['motor'])
+        raise ValueError(f'The following motors have unset max velocity limits: {vel_max_lim_0}. '
+                         f'max_velocity must be set')
     if all([d == 0 for d in dists]):
         # TODO: fix this to handle when motors don't need to move
         # if dists are all 0, set all motors to min velocity
