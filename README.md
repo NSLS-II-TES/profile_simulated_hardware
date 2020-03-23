@@ -18,6 +18,10 @@ Install a MongoDB following the instructions from
 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat.
 
 
+Install Docker following the instructions from
+https://docs.docker.com/install/linux/docker-ce/fedora/.
+
+
 
 ```bash
 docker run -it --rm --name motorsim --network=host mikehart/motorsim
