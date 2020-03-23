@@ -15,8 +15,9 @@ Configure the ports mapping:
 
 
 Install a MongoDB following the instructions from
-https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat.
-
+- https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat
+or
+- https://tecadmin.net/install-mongodb-on-fedora/
 
 Install Docker following the instructions from
 https://docs.docker.com/install/linux/docker-ce/fedora/.
