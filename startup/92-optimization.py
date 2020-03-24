@@ -73,24 +73,11 @@ class HardwareFlyer(BlueskyFlyer):
                                key=lambda x: self.time_to_travel[x],
                                reverse=True)[0]
 
-        # self.detector.settings.acquire.put(0)
-        # self.detector.settings.num_images.put(10000)
-        # self.detector.settings.acquire_time.put(0.05)
-        # self.detector.settings.acquire.put(1)
         start_detector(self.detector)
 
         # Call this function once before we start moving all motors to collect the first points.
         self._watch_function()
 
-        # TODO: add a check for zero division:
-        # ~/.ipython/profile_collection/startup/92-optimization.py in calc_velocity(motors, dists, velocity_limits)
-        #     169     for i in range(len(velocity_limits)):
-        #     170         if i != max_dist_index:
-        # --> 171             try_vel = np.round(dists[i] / time_needed, 1)
-        #     172             if try_vel < velocity_limits[i][0]:
-        #     173                 try_vel = velocity_limits[i][0]
-        #
-        # ZeroDivisionError: float division by zero
         for motor_name, motor_obj in self.motors.items():
             motor_obj.velocity.put(self.velocities[motor_name])
 
@@ -106,22 +93,18 @@ class HardwareFlyer(BlueskyFlyer):
 
     def complete(self):
         # all motors arrived
-        # stop detector
         stop_detector(self.detector)
         return self.motor_move_status
 
     def describe_collect(self):
 
         return_dict = {self.name:
-                           {
-                               # f'{self.name}_{self.detector.channel1.rois.roi01.name}':
-                               f'{self.name}_intensity':
-                                   # {'source': f'{self.name}_{self.detector.channel1.rois.roi01.name}',
-                                   {'source': f'{self.name}_intensity',
-                                    'dtype': 'number',
-                                    'shape': []},
-                            }
+                       {f'{self.name}_intensity':
+                        {'source': f'{self.name}_intensity',
+                         'dtype': 'number',
+                         'shape': []},
                         }
+                       }
 
         motor_dict = {}
         for motor_name, motor_obj in self.motors.items():
@@ -130,8 +113,6 @@ class HardwareFlyer(BlueskyFlyer):
              motor_dict[f'{self.name}_{motor_name}_position'] = {'source': f'{self.name}_{motor_name}_position',
                                                                  'dtype': 'number', 'shape': []}
         return_dict[self.name].update(motor_dict)
-
-        # print('describe_collect:\n', return_dict)
 
         return return_dict
 
@@ -144,18 +125,15 @@ class HardwareFlyer(BlueskyFlyer):
                      f'{self.name}_{motor_name}_position': self.watch_positions[motor_name][ind]}
                 )
 
-            # data = {f'{self.name}_{self.detector.channel1.rois.roi01.name}': self.watch_intensities[ind]}
             data = {f'{self.name}_intensity': self.watch_intensities[ind]}
             data.update(motor_dict)
-
-            # print('data:\n', data)
 
             yield {'data': data,
                    'timestamps': {key: self.watch_timestamps[ind] for key in data},
                    'time': self.watch_timestamps[ind],
                    'filled': {key: False for key in data}}
 
-        ## This will produce one event with dictionaries in the <...>_parameters field.
+        # # This will produce one event with dictionaries in the <...>_parameters field.
         # motor_params_dict = {}
         # for motor_name, motor_obj in self.motors.items():
         #     motor_parameters = {'timestamps': self.watch_timestamps,
@@ -172,7 +150,6 @@ class HardwareFlyer(BlueskyFlyer):
         #        'filled': {key: False for key in data}}
 
     def _watch_function(self, *args, **kwargs):
-        # self.watch_intensities.append(self.detector.channel1.rois.roi01.value.get())
         self.watch_intensities.append(read_detector(self.detector))
         for motor_name, motor_obj in self.motors.items():
             self.watch_positions[motor_name].append(motor_obj.user_readback.get())
@@ -183,55 +160,31 @@ params_to_change = []
 
 
 motors = {sample_stage.x.name: sample_stage.x,
-          sample_stage.y.name: sample_stage.y,}
-#           sample_stage.z.name: sample_stage.z,}
-
-"""
-# Velocities (same for each motor x, y, z)
-In [3]: sample_stage.z.velocity.limits                                                                            
-Out[3]: (0.0, 11.0)
-# Limits
-In [4]: sample_stage.x.limits                                                                                     
-Out[4]: (16.0, 88.2)
-In [5]: sample_stage.y.limits                                                                                     
-Out[5]: (32.0, 116.9)
-In [12]: sample_stage.z.limits                                                                                    
-Out[12]: (14.0, 23.0)
-# Current positions
-In [10]: sample_stage.x.user_readback.get()                                                                       
-Out[10]: 69.5
-In [9]: sample_stage.y.user_readback.get()                                                                        
-Out[9]: 40.0
-In [11]: sample_stage.z.user_readback.get()                                                                       
-Out[11]: 22.22
-"""
+          sample_stage.y.name: sample_stage.y,
+          sample_stage.z.name: sample_stage.z,}
 
 # TODO: merge "params_to_change" and "velocities" lists of dictionaries to become lists of dicts of dicts.
 # x limits = 45, 55
 # y limits = 70, 80
 params_to_change.append({sample_stage.x.name: 45,
-                         sample_stage.y.name: 79})
-                         # sample_stage.z.name: 20})
+                         sample_stage.y.name: 79,
+                         sample_stage.z.name: 20})
 
 params_to_change.append({sample_stage.x.name: 53,
-                         sample_stage.y.name: 71})
-                         # sample_stage.z.name: 19})
+                         sample_stage.y.name: 71,
+                         sample_stage.z.name: 19})
 
 params_to_change.append({sample_stage.x.name: 51,
-                         sample_stage.y.name: 77})
-                         # sample_stage.z.name: 22.9})
+                         sample_stage.y.name: 77,
+                         sample_stage.z.name: 22.9})
 
 params_to_change.append({sample_stage.x.name: 54,
-                         sample_stage.y.name: 75})
-                         # sample_stage.z.name: 22.9})
+                         sample_stage.y.name: 75,
+                         sample_stage.z.name: 22.9})
 
 params_to_change.append({sample_stage.x.name: 47,
-                         sample_stage.y.name: 72})
-                         # sample_stage.z.name: 22.9})
-
-# update function - change params
-
-# RE(bp.fly([hf]))
+                         sample_stage.y.name: 72,
+                         sample_stage.z.name: 22.9})
 
 
 def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocity=None):
@@ -345,7 +298,6 @@ def generate_flyer_params(population, max_velocity):
                 dists.append(abs(param[motor_name] - population[i - 1][motor_name]))
         velocities = calc_velocity(motors.keys(), dists, velocity_limits,
                                    max_velocity=max_velocity, min_velocity=0)
-        # velocities = calc_velocity(motors.keys(), dists, velocity_limits, max_velocity=1.3, min_velocity=0)
         for motor_name, vel, dist in zip(motors, velocities, dists):
             velocities_dict[motor_name] = vel
             distances_dict[motor_name] = dist
@@ -366,9 +318,9 @@ def generate_flyer_params(population, max_velocity):
             times_dict[motor_name] = time_
         times_list.append(times_dict)
 
-    print('Distances:  ', distances_list)
-    print('Velocities: ', velocities_list)
-    print('Times: ', times_list)
+    # print('Distances:  ', distances_list)
+    # print('Velocities: ', velocities_list)
+    # print('Times: ', times_list)
     return velocities_list, times_list
 
 
@@ -427,76 +379,7 @@ def optimize(motors=motors, bounds=motor_bounds, max_velocity=0.2, popsize=5, cr
         initial_population.append(indv)
     print('INITIAL POPULATION:', initial_population)
 
-    # velocities_list = []
-    # distances_list = []
-    # for i, param in enumerate(initial_population):
-    #     velocities_dict = {}
-    #     distances_dict = {}
-    #     dists = []
-    #     velocity_limits = []
-    #     if i == 0:
-    #         for motor_name, motor_obj in motors.items():
-    #             velocity_limit_dict = {'motor': motor_name,
-    #                                    'low': motor_obj.velocity.low_limit,
-    #                                    'high': motor_obj.velocity.high_limit}
-    #             velocity_limits.append(velocity_limit_dict)
-    #             dists.append(0)
-    #     else:
-    #         for motor_name, motor_obj in motors.items():
-    #             velocity_limit_dict = {'motor': motor_name,
-    #                                    'low': motor_obj.velocity.low_limit,
-    #                                    'high': motor_obj.velocity.high_limit}
-    #             velocity_limits.append(velocity_limit_dict)
-    #             dists.append(abs(param[motor_name] - initial_population[i - 1][motor_name]))
-    #     velocities = calc_velocity(motors.keys(), dists, velocity_limits, max_velocity=0.2, min_velocity=0)
-    #     # velocities = calc_velocity(motors.keys(), dists, velocity_limits, max_velocity=1.3, min_velocity=0)
-    #     for motor_name, vel, dist in zip(motors, velocities, dists):
-    #         velocities_dict[motor_name] = vel
-    #         distances_dict[motor_name] = dist
-    #     velocities_list.append(velocities_dict)
-    #     distances_list.append(distances_dict)
-    #
-    # # Validation
-    # times_list = []
-    # for dist, vel in zip(distances_list, velocities_list):
-    #     times_dict = {}
-    #     for motor_name, motor_obj in motors.items():
-    #         if vel[motor_name] == 0:
-    #             time_ = 0
-    #         else:
-    #             time_ = dist[motor_name] / vel[motor_name]
-    #         times_dict[motor_name] = time_
-    #     times_list.append(times_dict)
-    #
-    # print('Distances:  ', distances_list)
-    # print('Velocities: ', velocities_list)
-    # print('Times: ', times_list)
-
     velocities_list, times_list = generate_flyer_params(initial_population, max_velocity)
-
-    """
-    In [2]: params_to_change                                                                                          
-    Out[2]: 
-    [{'sample_stage_x': 55, 'sample_stage_y': 60, 'sample_stage_z': 15},
-     {'sample_stage_x': 20, 'sample_stage_y': 90, 'sample_stage_z': 18},
-     {'sample_stage_x': 80, 'sample_stage_y': 36, 'sample_stage_z': 22.9}]
-    In [3]: velocities_list                                                                                           
-    Out[3]: 
-    [{'sample_stage_x': 8.0, 'sample_stage_y': 11.0, 'sample_stage_z': 4.0},
-     {'sample_stage_x': 10.9, 'sample_stage_y': 11.0, 'sample_stage_z': 0.9},
-     {'sample_stage_x': 11.0, 'sample_stage_y': 4.2, 'sample_stage_z': 0.7}]
-    In [4]: times_list                                                                                                
-    Out[4]: 
-    [{'sample_stage_x': 1.8125,
-      'sample_stage_y': 1.8181818181818181,
-      'sample_stage_z': 1.8049999999999997},
-     {'sample_stage_x': 4.541284403669724,
-      'sample_stage_y': 4.545454545454546,
-      'sample_stage_z': 4.688888888888887},
-     {'sample_stage_x': 0.9545454545454546,
-      'sample_stage_y': 0.9523809523809523,
-      'sample_stage_z': 0.9714285714285711}]
-    """
 
     for param, vel, time_ in zip(initial_population, velocities_list, times_list):
         hf = HardwareFlyer(params_to_change=param,
@@ -508,38 +391,6 @@ def optimize(motors=motors, bounds=motor_bounds, max_velocity=0.2, popsize=5, cr
         hf_flyers.append(hf)
 
     pop_positions, pop_intensity = omea_evaluation(len(initial_population))
-
-    # # get the data from databroker
-    # # need max intensity in between and intensity at each population value
-    # current_fly_data = []
-    # pop_intensity = []
-    # pop_positions = []
-    # max_intensities = []
-    # max_int_pos = []
-    # for i in range(-popsize, 0, 1):
-    #     current_fly_data.append(db[i].table('tes_hardware_flyer'))
-    # for i, t in enumerate(current_fly_data):
-    #     pop_pos_dict = {}
-    #     positions_dict = {}
-    #     max_int_index = t['tes_hardware_flyer_intensity'].idxmax()
-    #     for motor_name in motors.keys():
-    #         positions_dict[motor_name] = t[f'tes_hardware_flyer_{motor_name}_position'][max_int_index]
-    #         pop_pos_dict[motor_name] = t[f'tes_hardware_flyer_{motor_name}_position'][len(t)]
-    #     pop_intensity.append(t['tes_hardware_flyer_intensity'][len(t)])
-    #     max_intensities.append(t['tes_hardware_flyer_intensity'][max_int_index])
-    #     pop_positions.append(pop_pos_dict)
-    #     max_int_pos.append(positions_dict)
-    # print('pop_positions', pop_positions)
-    # print('max_int_pos', max_int_pos)
-    # # compare max of each fly scan to population
-    # # replace population/intensity with higher vals, if they exist
-    # for i in range(len(max_intensities)):
-    #     if max_intensities[i] > pop_intensity[i]:
-    #         pop_intensity[i] = max_intensities[i]
-    #         for motor_name, pos in max_int_pos[i].items():
-    #             pop_positions[i][motor_name] = pos
-    # print('New positions:', pop_positions)
-    # print('New intensities:', pop_intensity)
 
     # Termination conditions
     v = 0  # generation number
@@ -748,8 +599,3 @@ def select(population, ind_sol, motors, crossover_indv, max_velocity):
             population[i] = positions[i]
             ind_sol[i] = intensities[i]
     return population, ind_sol
-
-
-def move_back():
-    yield from bps.mv(sample_stage.x, 50,
-                      sample_stage.y, 75)

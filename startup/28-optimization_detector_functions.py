@@ -1,5 +1,6 @@
 import random
 
+
 # start detector
 def start_detector(detector):
     pass
@@ -7,6 +8,7 @@ def start_detector(detector):
 
 # read detector
 def read_detector(detector):
+    #TODO: change this to be gaussian function
     return random.randint(0, 100)
 
 
