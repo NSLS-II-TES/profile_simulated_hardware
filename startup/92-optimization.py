@@ -1,6 +1,5 @@
 import time as ttime
 import bluesky.plans as bp
-import bluesky.plan_stubs as bps
 
 from collections import deque
 
@@ -43,7 +42,8 @@ class BlueskyFlyer:
 
 
 class HardwareFlyer(BlueskyFlyer):
-    def __init__(self, params_to_change, velocities, time_to_travel, detector, motors):
+    def __init__(self, params_to_change, velocities, time_to_travel,
+                 detector, motors):
         super().__init__()
         self.name = 'tes_hardware_flyer'
 
@@ -150,9 +150,14 @@ class HardwareFlyer(BlueskyFlyer):
         #        'filled': {key: False for key in data}}
 
     def _watch_function(self, *args, **kwargs):
-        self.watch_intensities.append(read_detector(self.detector))
+        pos_list = []
         for motor_name, motor_obj in self.motors.items():
+            pos_list.append(motor_obj.user_readback.get())
             self.watch_positions[motor_name].append(motor_obj.user_readback.get())
+        self.watch_intensities.append(read_detector(self.detector, pos_list))
+        # self.watch_intensities.append(read_detector(self.detector))
+        # for motor_name, motor_obj in self.motors.items():
+        #     self.watch_positions[motor_name].append(motor_obj.user_readback.get())
         self.watch_timestamps.append(ttime.time())
 
 
@@ -166,25 +171,25 @@ motors = {sample_stage.x.name: sample_stage.x,
 # TODO: merge "params_to_change" and "velocities" lists of dictionaries to become lists of dicts of dicts.
 # x limits = 45, 55
 # y limits = 70, 80
-params_to_change.append({sample_stage.x.name: 45,
-                         sample_stage.y.name: 79,
-                         sample_stage.z.name: 20})
-
-params_to_change.append({sample_stage.x.name: 53,
-                         sample_stage.y.name: 71,
-                         sample_stage.z.name: 19})
-
-params_to_change.append({sample_stage.x.name: 51,
-                         sample_stage.y.name: 77,
-                         sample_stage.z.name: 22.9})
-
-params_to_change.append({sample_stage.x.name: 54,
-                         sample_stage.y.name: 75,
-                         sample_stage.z.name: 22.9})
-
-params_to_change.append({sample_stage.x.name: 47,
-                         sample_stage.y.name: 72,
-                         sample_stage.z.name: 22.9})
+# params_to_change.append({sample_stage.x.name: 45,
+#                          sample_stage.y.name: 79,
+#                          sample_stage.z.name: 20})
+#
+# params_to_change.append({sample_stage.x.name: 53,
+#                          sample_stage.y.name: 71,
+#                          sample_stage.z.name: 19})
+#
+# params_to_change.append({sample_stage.x.name: 51,
+#                          sample_stage.y.name: 77,
+#                          sample_stage.z.name: 22.9})
+#
+# params_to_change.append({sample_stage.x.name: 54,
+#                          sample_stage.y.name: 75,
+#                          sample_stage.z.name: 22.9})
+#
+# params_to_change.append({sample_stage.x.name: 47,
+#                          sample_stage.y.name: 72,
+#                          sample_stage.z.name: 22.9})
 
 
 def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocity=None):
@@ -357,7 +362,7 @@ def omea_evaluation(num_of_scans):
 
 best_fitness = [0]
 hf_flyers = []
-bound_vals = [(45, 55), (70, 80)]
+bound_vals = [(300, 450), (300, 450), (300, 450)]
 motor_bounds = {}
 for i, motor in enumerate(motors.items()):
     motor_bounds[motor[0]] = {'low': bound_vals[i][0], 'high': bound_vals[i][1]}
@@ -579,6 +584,7 @@ def crossover(population, mutated_indv, crosspb):
 
 
 def select(population, ind_sol, motors, crossover_indv, max_velocity):
+    # TODO: take out motor moving, only do analysis here
     positions = [elm for elm in crossover_indv]
     positions.insert(0, population[0])
     velocities_list, times_list = generate_flyer_params(population, max_velocity)
