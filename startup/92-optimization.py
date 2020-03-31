@@ -329,7 +329,8 @@ def generate_flyer_params(population, max_velocity):
     return velocities_list, times_list
 
 
-def omea_evaluation(num_of_scans):
+def omea_evaluation(num_of_scans, uids, flyer_name, intensity_name, field_name):
+    # TODO: parameterize flyer name
     # get the data from databroker
     # num_of_scans is number of db records to look at
     current_fly_data = []
@@ -337,17 +338,18 @@ def omea_evaluation(num_of_scans):
     pop_positions = []
     max_intensities = []
     max_int_pos = []
-    for i in range(-num_of_scans, 0, 1):
-        current_fly_data.append(db[i].table('tes_hardware_flyer'))
+    # for i in range(-num_of_scans, 0, 1):
+    for uid in uids:
+        current_fly_data.append(db[uid].table(flyer_name))
     for i, t in enumerate(current_fly_data):
         pop_pos_dict = {}
         positions_dict = {}
-        max_int_index = t['tes_hardware_flyer_intensity'].idxmax()
-        for motor_name in motors.keys():
-            positions_dict[motor_name] = t[f'tes_hardware_flyer_{motor_name}_position'][max_int_index]
-            pop_pos_dict[motor_name] = t[f'tes_hardware_flyer_{motor_name}_position'][len(t)]
-        pop_intensity.append(t['tes_hardware_flyer_intensity'][len(t)])
-        max_intensities.append(t['tes_hardware_flyer_intensity'][max_int_index])
+        max_int_index = t[f'{flyer_name}_{intensity_name}'].idxmax()
+        for param_name in motors.keys():
+            positions_dict[param_name] = t[f'{flyer_name}_{param_name}_{field_name}'][max_int_index]
+            pop_pos_dict[param_name] = t[f'{flyer_name}_{param_name}_{field_name}'][len(t)]
+        pop_intensity.append(t[f'{flyer_name}_{intensity_name}'][len(t)])
+        max_intensities.append(t[f'{flyer_name}_{intensity_name}'][max_int_index])
         pop_positions.append(pop_pos_dict)
         max_int_pos.append(positions_dict)
     # compare max of each fly scan to population
@@ -369,7 +371,8 @@ for i, motor in enumerate(motors.items()):
 
 
 def optimize(motors=motors, bounds=motor_bounds, max_velocity=0.2, popsize=5, crosspb=.8, mut=.1,
-             mut_type='rand/1', threshold=0, max_iter=100):
+             mut_type='rand/1', threshold=0, max_iter=100, flyer_name='tes_hardware_flyer',
+             intensity_name='intensity', field_name='position'):
     # create initial population
     initial_population = []
     for i in range(popsize):
@@ -386,16 +389,20 @@ def optimize(motors=motors, bounds=motor_bounds, max_velocity=0.2, popsize=5, cr
 
     velocities_list, times_list = generate_flyer_params(initial_population, max_velocity)
 
+    # TODO: move this to run_fly_scan function; yield from run_fly_scan
+    uid_list = []
     for param, vel, time_ in zip(initial_population, velocities_list, times_list):
         hf = HardwareFlyer(params_to_change=param,
                            velocities=vel,
                            time_to_travel=time_,
                            detector=None, motors=motors)
-        yield from bp.fly([hf])
-
+        uid = (yield from bp.fly([hf]))
+        uid_list.append(uid)
         hf_flyers.append(hf)
 
-    pop_positions, pop_intensity = omea_evaluation(len(initial_population))
+    pop_positions, pop_intensity = omea_evaluation(num_of_scans=len(initial_population), uids=uid_list,
+                                                   flyer_name=flyer_name, intensity_name=intensity_name,
+                                                   field_name=field_name)
 
     # Termination conditions
     v = 0  # generation number
@@ -410,22 +417,26 @@ def optimize(motors=motors, bounds=motor_bounds, max_velocity=0.2, popsize=5, cr
         # crossover
         cross_trial_pop = crossover(pop_positions, mutated_trial_pop, crosspb)
 
-        # select, how can this be it's own function?
+        # select
+        # TODO: make select its own function
         select_positions = [elm for elm in cross_trial_pop]
         indv = {}
         for motor_name, motor_obj in motors.items():
             indv[motor_name] = motor_obj.user_readback.get()
         select_positions.insert(0, indv)
         velocities_list, times_list = generate_flyer_params(select_positions, max_velocity)
+        uid_list = []
         for param, vel, time_ in zip(select_positions, velocities_list, times_list):
             hf = HardwareFlyer(params_to_change=param,
                                velocities=vel,
                                time_to_travel=time_,
                                detector=None, motors=motors)
-            yield from bp.fly([hf])
-
+            uid = (yield from bp.fly([hf]))
+            uid_list.append(uid)
             hf_flyers.append(hf)
-        positions, intensities = omea_evaluation(len(select_positions))
+        positions, intensities = omea_evaluation(num_of_scans=len(select_positions), uids=uid_list,
+                                                 flyer_name=flyer_name, intensity_name=intensity_name,
+                                                 field_name=field_name)
         positions = positions[1:]
         intensities = intensities[1:]
         for i in range(len(intensities)):
@@ -471,15 +482,18 @@ def optimize(motors=motors, bounds=motor_bounds, max_velocity=0.2, popsize=5, cr
             pos_to_check.append(indv)
 
             velocities_list, times_list = generate_flyer_params(pos_to_check, max_velocity)
+            uid_list = []
             for param, vel, time_ in zip(pos_to_check, velocities_list, times_list):
                 hf = HardwareFlyer(params_to_change=param,
                                    velocities=vel,
                                    time_to_travel=time_,
                                    detector=None, motors=motors)
-                yield from bp.fly([hf])
-
+                uid = (yield from bp.fly([hf]))
+                uid_list.append(uid)
                 hf_flyers.append(hf)
-            rand_position, rand_intensity = omea_evaluation(len(pos_to_check))
+            rand_position, rand_intensity = omea_evaluation(num_of_scans=len(pos_to_check), uids=uid_list,
+                                                            flyer_name=flyer_name, intensity_name=intensity_name,
+                                                            field_name=field_name)
             rand_position = rand_position[1:]
             rand_intensity = rand_intensity[1:]
             if rand_intensity[0] > pop_intensity[change_indx]:
@@ -584,6 +598,7 @@ def crossover(population, mutated_indv, crosspb):
 
 
 def select(population, ind_sol, motors, crossover_indv, max_velocity):
+    # TODO: fix params
     # TODO: take out motor moving, only do analysis here
     positions = [elm for elm in crossover_indv]
     positions.insert(0, population[0])
