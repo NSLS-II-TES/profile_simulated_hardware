@@ -1,23 +1,41 @@
-import random
+# import random
 import numpy as np
 
 
 # start detector
 def start_detector(detector):
+    """Set-up and start detector"""
     pass
 
 
 # read detector
-def read_detector(detector, x):
-    x_list = [.2 * elm for elm in x]
-    x = sum(x_list)
-    cen = 219.8
+def read_detector(detector, pos):
+    """Read detector
+
+    Uses motor positions to create a gaussian type signal
+
+    Parameters
+    ----------
+    detector : detector object
+    pos : array like
+          Positions of motors
+
+    Returns
+    -------
+    intensity : float
+                Gaussian curve signal
+
+    """
+    pos_list = [.2 * elm for elm in pos]
+    pos = sum(pos_list)
+    cen = 48.2
     wid = 10
     amp = 10
-    return np.exp(-((x - cen) ** 2) / (2. * wid ** 2)) * amp
+    intensity = np.exp(-((pos - cen) ** 2) / (2. * wid ** 2)) * amp
+    return intensity
     # return random.randint(0, 100)
 
 
-# stop detector
 def stop_detector(detector):
+    """Stop detector"""
     pass
