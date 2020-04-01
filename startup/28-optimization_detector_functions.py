@@ -10,14 +10,16 @@ def start_detector(detector):
 
 # read detector
 def read_detector(detector, pos):
-    """Read detector
+    """
+    Read detector
 
-    Uses motor positions to create a gaussian type signal
+    Uses motor positions to create a gaussian type signal. Gaussian center is 48.2,
+    width is 10, and amplitude is 10
 
     Parameters
     ----------
     detector : detector object
-    pos : array like
+    pos : array_like
           Positions of motors
 
     Returns

@@ -164,6 +164,12 @@ class HardwareFlyer(BlueskyFlyer):
 motors = {sample_stage.x.name: sample_stage.x,
           sample_stage.y.name: sample_stage.y,}
           # sample_stage.z.name: sample_stage.z,}
+
+bound_vals = [(0, 150), (0, 150)]  # , (0, 150)]
+motor_bounds = {}
+for i, motor in enumerate(motors.items()):
+    motor_bounds[motor[0]] = {'low': bound_vals[i][0], 'high': bound_vals[i][1]}
+
 # TODO: change motor list to be dict of dicts;
 #  {motor_name: {position: val}}, {motor_name: {bounds: [low, high]}}
 
@@ -173,6 +179,28 @@ motors = {sample_stage.x.name: sample_stage.x,
 
 
 def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocity=None):
+    """
+    Calculates velocities of all motors
+
+    Velocities calculated will allow motors to approximately start and stop together
+
+    Parameters
+    ----------
+    motors : dict
+             In the format {motor_name: motor_object}
+             Ex. {sample_stage.x.name: sample_stage.x}
+    dists :
+    velocity_limits :
+    max_velocity : float
+                   Set this to limit the absolute highest velocity of any motor
+    min_velocity : float
+                   Set this to limit the absolute lowest velocity of any motor
+
+    Returns
+    -------
+    ret_vels : list
+               List of velocities for each motor
+    """
     ret_vels = []
     # check that max_velocity is not None if at least 1 motor doesn't have upper velocity limit
     if any([lim['high'] == 0 for lim in velocity_limits]) and max_velocity is None:
@@ -229,7 +257,8 @@ def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocit
         else:
             # use slowest motor that moves the most
             ret_vels.clear()
-            lowest_velocity_motors = np.where(upper_velocity_bounds == np.min(upper_velocity_bounds))[0]
+            lowest_velocity_motors = np.where(upper_velocity_bounds ==
+                                              np.min(upper_velocity_bounds))[0]
             max_dist_to_move = -1
             for k in lowest_velocity_motors:
                 if dists[k] >= max_dist_to_move:
@@ -259,10 +288,10 @@ def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocit
             return ret_vels
 
 
-def run_hardware_fly(motors, detector, population, max_velocity):
+def run_hardware_fly(motors, detector, population, max_velocity, min_velocity):
     uid_list = []
-    flyers = generate_flyers(motors=motors, detector=detector,
-                             population=population, max_velocity=max_velocity)
+    flyers = generate_flyers(motors=motors, detector=detector, population=population,
+                             max_velocity=max_velocity, min_velocity=min_velocity)
     for flyer in flyers:
         yield from bp.fly([flyer])
     for i in range(-len(flyers), 0):
@@ -272,7 +301,7 @@ def run_hardware_fly(motors, detector, population, max_velocity):
     return uid_list
 
 
-def generate_flyers(motors, detector, population, max_velocity):
+def generate_flyers(motors, detector, population, max_velocity, min_velocity):
     hf_flyers = []
     velocities_list = []
     distances_list = []
@@ -296,7 +325,7 @@ def generate_flyers(motors, detector, population, max_velocity):
                 velocity_limits.append(velocity_limit_dict)
                 dists.append(abs(param[motor_name] - population[i - 1][motor_name]))
         velocities = calc_velocity(motors=motors.keys(), dists=dists, velocity_limits=velocity_limits,
-                                   max_velocity=max_velocity, min_velocity=0)
+                                   max_velocity=max_velocity, min_velocity=min_velocity)
         for motor_name, vel, dist in zip(motors, velocities, dists):
             velocities_dict[motor_name] = vel
             distances_dict[motor_name] = dist
@@ -358,17 +387,54 @@ def omea_evaluation(motors, uids, flyer_name, intensity_name, field_name):
     return pop_positions, pop_intensity
 
 
-best_fitness = [0]
-# hf_flyers = []
-bound_vals = [(0, 150), (0, 150)]  # , (0, 150)]
-motor_bounds = {}
-for i, motor in enumerate(motors.items()):
-    motor_bounds[motor[0]] = {'low': bound_vals[i][0], 'high': bound_vals[i][1]}
-
-
-def optimize(fly_plan, motors=motors, detector=None, bounds=motor_bounds, max_velocity=0.2,
+def optimize(fly_plan, motors, detector, bounds, max_velocity=0.2, min_velocity=0,
              popsize=5, crosspb=.8, mut=.1, mut_type='rand/1', threshold=0, max_iter=100,
              flyer_name='tes_hardware_flyer', intensity_name='intensity', field_name='position'):
+    """
+    Optimize beamline using hardware flyers and differential evolution
+
+    Custom plan to optimize motor positions of the TES beamline using differential evolution
+
+    Parameters
+    ----------
+    fly_plan : callable
+               Fly scan plan for current type of flyer.
+               Currently the only option is `run_hardware_fly`, but another will be added for sirepo simulations
+    motors : dict
+             Keys are motor names and values are motor objects
+    detector : detector object or None
+               Detector to use, or None if no detector will be used
+    bounds : dict of dicts
+             Keys are motor names and values are dicts of low and high bounds. See format below.
+             {'motor_name': {'low': lower_bound, 'high': upper_bound}}
+    max_velocity : float, optional
+                   Absolute maximum velocity for all motors
+                   Default is 0.2
+    min_velocity : float, optional
+                   Absolute minumum velocity for all motors
+    popsize : int, optional
+              Size of population
+    crosspb : float, optional
+              Probability of crossover. Must be in range [0, 1]
+    mut : float, optional
+          Mutation factor. Must be in range [0, 1]
+    mut_type : {'rand/1', 'best/1'}, optional
+               Mutation strategy to use. 'rand/1' chooses random individuals to compare to.
+               'best/1' uses the best individual to compare to.
+               Default is 'rand/1'
+    threshold : float, optional
+                Threshold that intensity must be greater than or equal to to stop execution
+    max_iter : int, optional
+               Maximum iterations to allow
+    flyer_name : str, optional
+                 Name of flyer. DataBroker stream name
+                 Default is 'tes_hardware_flyer'
+    intensity_name : {'intensity', 'mean'}, optional
+                     Hardware optimization would use 'intensity'. Sirepo optimization would use 'mean'
+                     Default is 'intensity'
+    field_name : str, optional
+                 Default is 'position'
+    """
     # create initial population
     initial_population = []
     for i in range(popsize):
@@ -385,8 +451,8 @@ def optimize(fly_plan, motors=motors, detector=None, bounds=motor_bounds, max_ve
     for i in initial_population:
         print(i)
 
-    uid_list = (yield from fly_plan(motors=motors, detector=detector,
-                                    population=initial_population, max_velocity=max_velocity))
+    uid_list = (yield from fly_plan(motors=motors, detector=detector, population=initial_population,
+                                    max_velocity=max_velocity, min_velocity=min_velocity))
     # pop_positions, pop_intensity = omea_evaluation(num_of_scans=len(initial_population), uids=uid_list,
     pop_positions, pop_intensity = omea_evaluation(motors=motors, uids=uid_list,
                                                    flyer_name=flyer_name, intensity_name=intensity_name,
@@ -395,12 +461,13 @@ def optimize(fly_plan, motors=motors, detector=None, bounds=motor_bounds, max_ve
     v = 0  # generation number
     consec_best_ctr = 0  # counting successive generations with no change to best value
     old_best_fit_val = 0
+    best_fitness = [0]
     # while not (v > 1):
     while not ((v > max_iter) or (consec_best_ctr >= 5 and old_best_fit_val >= threshold)):
+        print(f'GENERATION {v + 1}')
         print('CURRENT GENERATION')
         for i in pop_positions:
             print(i)
-        print(f'GENERATION {v + 1}')
         best_gen_sol = []
         # mutate
         mutated_trial_pop = mutate(population=pop_positions, strategy=mut_type, mut=mut,
@@ -410,8 +477,8 @@ def optimize(fly_plan, motors=motors, detector=None, bounds=motor_bounds, max_ve
                                     crosspb=crosspb)
         # select
         select_positions = create_selection_params(motors=motors, cross_indv=cross_trial_pop)
-        uid_list = (yield from fly_plan(motors=motors, detector=detector,
-                                        population=select_positions, max_velocity=max_velocity))
+        uid_list = (yield from fly_plan(motors=motors, detector=detector, population=select_positions,
+                                        max_velocity=max_velocity, min_velocity=min_velocity))
 
         pop_positions, pop_intensity = select(population=pop_positions, intensities=pop_intensity,
                                               motors=motors, uids=uid_list, flyer_name=flyer_name,
@@ -440,8 +507,8 @@ def optimize(fly_plan, motors=motors, detector=None, bounds=motor_bounds, max_ve
         else:
             positions, change_indx = create_rand_selection_params(motors=motors, intensities=pop_intensity,
                                                                   bounds=bounds)
-            uid_list = (yield from fly_plan(motors=motors, detector=detector,
-                                            population=positions, max_velocity=max_velocity))
+            uid_list = (yield from fly_plan(motors=motors, detector=detector, population=positions,
+                                            max_velocity=max_velocity, min_velocity=min_velocity))
             rand_pop, rand_int = select(population=[pop_positions[change_indx]],
                                         intensities=[pop_intensity[change_indx]],
                                         motors=motors, uids=uid_list, flyer_name=flyer_name,
