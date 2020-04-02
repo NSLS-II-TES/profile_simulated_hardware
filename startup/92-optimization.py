@@ -150,22 +150,22 @@ class HardwareFlyer(BlueskyFlyer):
         #        'filled': {key: False for key in data}}
 
     def _watch_function(self, *args, **kwargs):
-        pos_list = []
-        for motor_name, motor_obj in self.motors.items():
-            pos_list.append(motor_obj.user_readback.get())
-            self.watch_positions[motor_name].append(motor_obj.user_readback.get())
-        self.watch_intensities.append(read_detector(self.detector, pos_list))
-        # self.watch_intensities.append(read_detector(self.detector))
+        # pos_list = []
         # for motor_name, motor_obj in self.motors.items():
+        #     pos_list.append(motor_obj.user_readback.get())
         #     self.watch_positions[motor_name].append(motor_obj.user_readback.get())
+        # self.watch_intensities.append(read_detector(self.detector, pos_list))
+        self.watch_intensities.append(read_detector(self.detector))
+        for motor_name, motor_obj in self.motors.items():
+            self.watch_positions[motor_name].append(motor_obj.user_readback.get())
         self.watch_timestamps.append(ttime.time())
 
 
 motors = {sample_stage.x.name: sample_stage.x,
-          sample_stage.y.name: sample_stage.y,}
-          # sample_stage.z.name: sample_stage.z,}
+          sample_stage.y.name: sample_stage.y,
+          sample_stage.z.name: sample_stage.z,}
 
-bound_vals = [(0, 150), (0, 150)]  # , (0, 150)]
+bound_vals = [(75, 79), (37, 41), (19, 21)]
 motor_bounds = {}
 for i, motor in enumerate(motors.items()):
     motor_bounds[motor[0]] = {'low': bound_vals[i][0], 'high': bound_vals[i][1]}
