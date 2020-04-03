@@ -30,7 +30,7 @@ def read_detector(detector, pos):
     """
     pos_list = [.2 * elm for elm in pos]
     pos = sum(pos_list)
-    cen = 27.2
+    cen = 27
     wid = .3
     amp = 5
     intensity = np.exp(-((pos - cen) ** 2) / (2. * wid ** 2)) * amp
@@ -38,16 +38,28 @@ def read_detector(detector, pos):
 
 
 def watch_function(motors, detector, *args, **kwargs):
-    watch_positions = {name: [] for name in motors}
+    watch_positions = {name: {'position': []} for name in motors}
     watch_intensities = []
     watch_timestamps = []
     pos_list = []
-    for motor_name, motor_obj in motors.items():
-        pos_list.append(motor_obj.user_readback.get())
-        watch_positions[motor_name].append(motor_obj.user_readback.get())
+    for motor_name, field in motors.items():
+        # watch_positions[motor_name] = {}
+        for field_name, motor_obj in field.items():
+            pos_list.append(motor_obj.user_readback.get())
+            watch_positions[motor_name][field_name].append(motor_obj.user_readback.get())
     watch_intensities.append(read_detector(detector, pos_list))
     watch_timestamps.append(ttime.time())
     return watch_positions, watch_intensities, watch_timestamps
+    # watch_positions = {name: [] for name in motors}
+    # watch_intensities = []
+    # watch_timestamps = []
+    # pos_list = []
+    # for motor_name, motor_obj in motors.items():
+    #     pos_list.append(motor_obj.user_readback.get())
+    #     watch_positions[motor_name].append(motor_obj.user_readback.get())
+    # watch_intensities.append(read_detector(detector, pos_list))
+    # watch_timestamps.append(ttime.time())
+    # return watch_positions, watch_intensities, watch_timestamps
 
 
 def stop_detector(detector):
