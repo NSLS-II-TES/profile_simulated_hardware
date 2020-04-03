@@ -181,8 +181,11 @@ def calc_velocity(motors, dists, velocity_limits, max_velocity=None, min_velocit
     motors : dict
              In the format {motor_name: motor_object}
              Ex. {sample_stage.x.name: sample_stage.x}
-    dists :
-    velocity_limits :
+    dists : list
+            List of distances each motor has to move
+    velocity_limits : list of dicts
+                      list of dicts for each motor. Dictionary has keys of motor, low, high;
+                      values are motor_name, velocity low limit, velocity high limit
     max_velocity : float
                    Set this to limit the absolute highest velocity of any motor
     min_velocity : float
