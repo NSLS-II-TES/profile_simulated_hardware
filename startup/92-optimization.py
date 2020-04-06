@@ -447,7 +447,7 @@ def omea_evaluation(motors, bounds, popsize, num_interm_vals, num_scans_at_once,
                         pop_positions[i][elem][param_name] = pos
         return pop_positions, pop_intensity
     elif bounds is not None and popsize is not None and num_interm_vals is\
-        not None and num_scans_at_once is not None:
+        not None and num_scans_at_once is not None and motors is None:
         # sirepo simulation
         pop_positions = []
         pop_intensities = []
@@ -792,7 +792,7 @@ def optimize(fly_plan, bounds, motors=None, detector=None, max_velocity=0.2, min
                                                        intensity_name=intensity_name)
     elif opt_type == 'sirepo':
         # make sure all parameters needed for hardware optimization aren't None
-        needed_params = [motors, detector]
+        needed_params = [run_parallel, num_interm_vals, num_scans_at_once, sim_id, server_name, root_dir, watch_name]
         if any(p is None for p in needed_params):
             invalid_params = []
             for p in range(len(needed_params)):
@@ -815,9 +815,10 @@ def optimize(fly_plan, bounds, motors=None, detector=None, max_velocity=0.2, min
         uid_list = (yield from fly_plan(population=initial_population, num_interm_vals=num_interm_vals,
                                         num_scans_at_once=num_scans_at_once, sim_id=sim_id, server_name=server_name,
                                         root_dir=root_dir, watch_name=watch_name, run_parallel=run_parallel))
-        pop_positions, pop_intensity = omea_evaluation(bounds=bounds, popsize=len(initial_population),
-                                                  num_interm_vals=num_interm_vals, num_scans_at_once=num_scans_at_once,
-                                                  flyer_name=flyer_name, intensity_name=intensity_name, uids=uid_list)
+        pop_positions, pop_intensity = omea_evaluation(motors=None, bounds=bounds, popsize=len(initial_population),
+                                                       num_interm_vals=num_interm_vals,
+                                                       num_scans_at_once=num_scans_at_once, uids=uid_list,
+                                                       flyer_name=flyer_name, intensity_name=intensity_name)
         pop_positions.reverse()
         pop_intensity.reverse()
     else:
