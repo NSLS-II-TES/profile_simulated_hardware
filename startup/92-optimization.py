@@ -11,9 +11,6 @@ from ophyd.sim import NullStatus, new_uid
 import numpy as np
 import random
 
-# TODO: test with sirepo
-# TODO: figure out which parts of flyer-environment are needed to run sirepo
-
 
 class BlueskyFlyer:
     def __init__(self):
@@ -881,15 +878,6 @@ def optimize(fly_plan, bounds, motors=None, detector=None, max_velocity=0.2, min
             break
         else:
             if opt_type == 'hardware':
-                # select_positions = create_selection_params(motors=motors, population=None,
-                #                                            cross_indv=cross_trial_pop)
-                # uid_list = (yield from fly_plan(motors=motors, detector=detector, population=select_positions,
-                #                                 max_velocity=max_velocity, min_velocity=min_velocity))
-                #
-                # pop_positions, pop_intensity = select(population=pop_positions, intensities=pop_intensity,
-                #                                       motors=motors, bounds=None, num_interm_vals=None,
-                #                                       num_scans_at_once=None, uids=uid_list,
-                #                                       flyer_name=flyer_name, intensity_name=intensity_name)
                 positions, change_indx = create_rand_selection_params(motors=motors, population=None,
                                                                       intensities=pop_intensity, bounds=bounds)
                 uid_list = (yield from fly_plan(motors=motors, detector=detector, population=positions,
