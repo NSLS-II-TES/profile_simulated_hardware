@@ -559,7 +559,7 @@ def rand_1(pop, popsize, target_indx, mut, bounds):
         v_donor[elem] = {}
         for param_name in param.keys():
             v_donor[elem][param_name] = x_1[elem][param_name] + mut *\
-                                        (x_3[elem][param_name] - x_3[elem][param_name])
+                                        (x_2[elem][param_name] - x_3[elem][param_name])
     v_donor = ensure_bounds(vec=v_donor, bounds=bounds)
     return v_donor
 
