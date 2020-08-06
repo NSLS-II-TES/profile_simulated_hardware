@@ -13,7 +13,6 @@ Configure the ports mapping:
   https://github.com/EuropeanSpallationSource/MCAG_setupMotionDemo)
 - for MongoDB, port 27017 (needed for databroker)
 
-
 Install a MongoDB following the instructions from
 - https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat
 or
@@ -22,9 +21,8 @@ or
 Install Docker following the instructions from
 https://docs.docker.com/install/linux/docker-ce/fedora/.
 
-
+Run a Docker container inside the VirtualBox VM to provide access to the motors:
 
 ```bash
 docker run -it --rm --name motorsim --network=host mikehart/motorsim
 ```
-
