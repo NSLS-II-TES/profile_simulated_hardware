@@ -149,8 +149,12 @@ class HardwareFlyer(BlueskyFlyer):
         #        'filled': {key: False for key in data}}
 
     def _watch_function(self, *args, **kwargs):
-        self.watch_positions, self.watch_intensities,\
-        self.watch_timestamps = watch_function(self.motors, self.detector)
-
-
-
+        watch_pos, watch_int, watch_time = watch_function(self.motors, self.detector)
+        for motor_name, field in self.motors.items():
+            for field_name, val in field.items():
+                self.watch_positions[motor_name][field_name].extend(watch_pos[motor_name][field_name])
+        self.watch_intensities.extend(watch_int)
+        self.watch_timestamps.extend(watch_time)
+        print(f'!!! pos {self.watch_positions},\n'
+              f'!!! int {self.watch_intensities},\n'
+              f'!!! time {self.watch_timestamps}')

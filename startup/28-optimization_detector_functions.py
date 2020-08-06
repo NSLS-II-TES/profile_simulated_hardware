@@ -49,16 +49,6 @@ def watch_function(motors, detector, *args, **kwargs):
     watch_intensities.append(read_detector(detector, pos_list))
     watch_timestamps.append(ttime.time())
     return watch_positions, watch_intensities, watch_timestamps
-    # watch_positions = {name: [] for name in motors}
-    # watch_intensities = []
-    # watch_timestamps = []
-    # pos_list = []
-    # for motor_name, motor_obj in motors.items():
-    #     pos_list.append(motor_obj.user_readback.get())
-    #     watch_positions[motor_name].append(motor_obj.user_readback.get())
-    # watch_intensities.append(read_detector(detector, pos_list))
-    # watch_timestamps.append(ttime.time())
-    # return watch_positions, watch_intensities, watch_timestamps
 
 
 def stop_detector(detector):
