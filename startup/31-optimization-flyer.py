@@ -91,7 +91,6 @@ class HardwareFlyer(BlueskyFlyer):
 
     def complete(self):
         # all motors arrived
-        stop_detector(self.detector)
         return self.motor_move_status
 
     def describe_collect(self):
@@ -115,6 +114,8 @@ class HardwareFlyer(BlueskyFlyer):
         return return_dict
 
     def collect(self):
+        stop_detector(self.detector)
+
         for ind in range(len(self.watch_intensities)):
             motor_dict = {}
             for motor_name, field in self.motors.items():
