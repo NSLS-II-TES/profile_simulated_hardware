@@ -271,6 +271,8 @@ def select(population, intensities, motors, bounds, num_interm_vals,
     return population, intensities
 
 
+# TODO: rename to optimization_plan - all 3 profiles
+# expect yield from inside
 def optimize(fly_plan, bounds, motors=None, detector=None, max_velocity=0.2, min_velocity=0,
              run_parallel=None, num_interm_vals=None, num_scans_at_once=None, sim_id=None,
              server_name=None, root_dir=None, watch_name=None, popsize=5, crosspb=.8, mut=.1,
@@ -340,6 +342,8 @@ def optimize(fly_plan, bounds, motors=None, detector=None, max_velocity=0.2, min
                 for elem, param in motors.items():
                     indv[elem] = {}
                     for param_name, elem_obj in param.items():
+                        # TODO: try to rework to use bps.read not .get()
+                        # yield from bps.read
                         indv[elem][param_name] = elem_obj.user_readback.get()
             else:
                 for elem, param in bounds.items():
@@ -353,7 +357,7 @@ def optimize(fly_plan, bounds, motors=None, detector=None, max_velocity=0.2, min
                                                        num_scans_at_once=None, uids=uid_list, flyer_name=flyer_name,
                                                        intensity_name=intensity_name)
     elif opt_type == 'sirepo':
-        # make sure all parameters needed for hardware optimization aren't None
+        # make sure all parameters needed for sirepo optimization aren't None
         needed_params = [run_parallel, num_interm_vals, num_scans_at_once, sim_id, server_name, root_dir, watch_name]
         if any(p is None for p in needed_params):
             invalid_params = []

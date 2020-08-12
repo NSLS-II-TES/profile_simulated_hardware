@@ -132,11 +132,11 @@ def run_hardware_fly(motors, detector, population, max_velocity, min_velocity):
     uid_list = []
     flyers = generate_hardware_flyers(motors=motors, detector=detector, population=population,
                              max_velocity=max_velocity, min_velocity=min_velocity)
-    print(f'LEN OF FLYERS {len(flyers)}')
     for flyer in flyers:
         yield from bp.fly([flyer])
     for i in range(-len(flyers), 0):
         uid_list.append(i)
+    # TODO: update later for use with newer bluesky
     # uid = (yield from bp.fly([hf]))
     # uid_list.append(uid)
     return uid_list

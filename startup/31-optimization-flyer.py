@@ -156,6 +156,3 @@ class HardwareFlyer(BlueskyFlyer):
                 self.watch_positions[motor_name][field_name].extend(watch_pos[motor_name][field_name])
         self.watch_intensities.extend(watch_int)
         self.watch_timestamps.extend(watch_time)
-        print(f'!!! pos {self.watch_positions},\n'
-              f'!!! int {self.watch_intensities},\n'
-              f'!!! time {self.watch_timestamps}')

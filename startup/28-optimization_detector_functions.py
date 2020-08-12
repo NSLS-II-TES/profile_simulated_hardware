@@ -1,4 +1,5 @@
 import numpy as np
+import time as ttime
 
 
 # start detector
@@ -42,7 +43,6 @@ def watch_function(motors, detector, *args, **kwargs):
     watch_timestamps = []
     pos_list = []
     for motor_name, field in motors.items():
-        # watch_positions[motor_name] = {}
         for field_name, motor_obj in field.items():
             pos_list.append(motor_obj.user_readback.get())
             watch_positions[motor_name][field_name].append(motor_obj.user_readback.get())
