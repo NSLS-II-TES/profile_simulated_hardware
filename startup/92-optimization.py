@@ -1,5 +1,7 @@
-from bloptools.DE_opt_utils import run_hardware_fly
-from bloptools.DE_optimization import optimization_plan
+import matplotlib.pyplot as plt
+
+from bloptools.de_opt_utils import run_hardware_fly
+from bloptools.de_optimization import optimization_plan
 
 
 motor_dict = {sample_stage.x.name: {'position': sample_stage.x},
@@ -13,6 +15,8 @@ motor_dict_keys = list(motor_dict.keys())
 for k in range(len(motor_dict_keys)):
     motor_bounds[motor_dict_keys[k]] = {'position': [bound_vals[k][0],
                                                      bound_vals[k][1]]}
+
+plt.figure()
 
 # run with:
 # RE(optimization_plan(fly_plan=run_hardware_fly, bounds=motor_bounds, db=db, motors=motor_dict,
