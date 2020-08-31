@@ -16,6 +16,7 @@ class SampleStage(Device):
 
 sample_stage = SampleStage('IOC:m', name='sample_stage')
 
+# shouldn't be done for real hardware
 for cpt in sample_stage.component_names:
     getattr(sample_stage, cpt).llm.put(-1000)
     getattr(sample_stage, cpt).hlm.put(1000)
