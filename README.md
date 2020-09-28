@@ -26,3 +26,9 @@ Run a Docker container inside the VirtualBox VM to provide access to the motors:
 ```bash
 docker run -it --rm --name motorsim --network=host mikehart/motorsim
 ```
+
+or
+
+```bash
+docker run -it --rm --name motorsim --network=host europeanspallationsource/motorsim
+```
