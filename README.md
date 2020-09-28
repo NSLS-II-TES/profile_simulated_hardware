@@ -30,5 +30,5 @@ docker run -it --rm --name motorsim --network=host mikehart/motorsim
 or
 
 ```bash
-docker run -it --rm --name motorsim --network=host europeanspallationsource/motorsim
+docker run -it --rm --name motorsim --network=host -e "PREFIX=IOC" europeanspallationsource/motorsim
 ```
