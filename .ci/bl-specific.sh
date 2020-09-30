@@ -1,12 +1,17 @@
 #!/bin/bash
 
-export USE_EPICS_IOC=1
+export USE_EPICS_IOC=0
 
-docker run -dt --rm --name motorsim --network=host -e "PREFIX=IOC" europeanspallationsource/motorsim
+if [ ! -z "${USE_EPICS_IOC}" ]; then
+    docker run -dt --rm --name motorsim --network=host -e "PREFIX=IOC" europeanspallationsource/motorsim
 
-sleep 10
+    sleep 10
 
-docker images
-docker ps -a
+    docker images
+    docker ps -a
 
-caget IOC:m2
+    caget IOC:m2
+else
+    echo "Falling back to use caproto-spoof-beamline IOC"
+fi
+
