@@ -1,3 +1,7 @@
-print(f'I am in {__file__}')
-print(sample_stage.read())
-print(sample_stage.x.component_names)
+import os
+from pprint import pprint
+
+
+pprint(f'I am in {os.path.abspath(__file__)}')
+pprint(sample_stage.read())
+pprint(sample_stage.x.component_names)
