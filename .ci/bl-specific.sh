@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export USE_CAPROTO_IOC=
+export USE_EPICS_IOC=1
 
 docker run -dt --rm --name motorsim --network=host -e "PREFIX=IOC" europeanspallationsource/motorsim
 
