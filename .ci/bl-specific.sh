@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export USE_EPICS_IOC=0
+export USE_EPICS_IOC=1
 
 echo -e "env inside $0"
 echo -e "========================================================"
