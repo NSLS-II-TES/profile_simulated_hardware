@@ -6,9 +6,6 @@ resources:
       ref: refs/heads/single-run-test-step
       endpoint: github
 
-variables:
-  BEAMLINE_ACRONYM: local
-
 jobs:
   - template: collection-2019-3.0.1.yml@templates
     parameters:
