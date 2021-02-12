@@ -15,7 +15,7 @@ if [ ! -z "${USE_EPICS_IOC}" -a "${USE_EPICS_IOC}" -ne 0 ]; then
     docker images
     docker ps -a
 
-    caget IOC:m2
+    caproto-get -vvvv IOC:m2
 else
     echo "Falling back to use caproto-spoof-beamline IOC"
 fi
