@@ -1,7 +1,7 @@
 #!/bin/bash
 
-caget_exists=$(which caget)
-if [ ! -z ${caget_exists} ]; then
+caget_exists=$(which caget || echo "")
+if [ -z ${caget_exists} ]; then
     echo "caget does not exist. Trying to install it..."
     conda install epics-base -y
 fi
