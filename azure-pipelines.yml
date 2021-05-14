@@ -7,9 +7,9 @@ resources:
       endpoint: github
 
 jobs:
-  # - template: collection-2019-3.0.1.yml@templates
-  #   parameters:
-  #    beamline_acronym: local
   - template: collection-2021-1.0.yml@templates
+    parameters:
+      beamline_acronym: local
+  - template: collection-2021-1.2.yml@templates
     parameters:
       beamline_acronym: local
