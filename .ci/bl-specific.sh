@@ -1,5 +1,8 @@
 #!/bin/bash
 
+mkdir -v -p $HOME/.config/tiled/profiles/
+touch $HOME/.config/tiled/profiles/local.yml
+
 export USE_EPICS_IOC=1
 
 echo -e "env inside $0"
