@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir -v -p $HOME/.config/tiled/profiles/
-touch $HOME/.config/tiled/profiles/local.yml
+cp -v .ci/profiles.yml $HOME/.config/tiled/profiles/profiles.yml
 
 export USE_EPICS_IOC=1
 
