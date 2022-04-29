@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -vxeuo pipefail
+set -vxeo pipefail
 
 mkdir -v -p $HOME/.config/tiled/profiles/
 cat << EOF > $HOME/.config/tiled/profiles/profiles.yml
