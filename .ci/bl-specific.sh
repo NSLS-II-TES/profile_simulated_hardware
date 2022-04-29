@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -vxeuo pipefail
+set -vxeo pipefail
 
 export USE_EPICS_IOC=1
 
