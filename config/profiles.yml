@@ -1,4 +1,4 @@
-local:
+tes:
   direct:
     authentication:
       allow_anonymous_access: true
