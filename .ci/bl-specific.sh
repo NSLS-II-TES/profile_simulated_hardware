@@ -1,7 +1,9 @@
 #!/bin/bash
 
 mkdir -v -p $HOME/.config/tiled/profiles/
-cp -v .ci/profiles.yml $HOME/.config/tiled/profiles/profiles.yml
+cp -v config/profiles.yml $HOME/.config/tiled/profiles/profiles.yml
+
+sudp cp -v config/kafka.yml /etc/bluesky/kafka.yml
 
 export USE_EPICS_IOC=1
 

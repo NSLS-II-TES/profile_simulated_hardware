@@ -1,0 +1,10 @@
+---
+  abort_run_on_kafka_exception: false
+  bootstrap_servers:
+    - localhost:9092
+  runengine_producer_config:
+    security.protocol: SASL_SSL
+    sasl.mechanisms: PLAIN
+    sasl.username: USER
+    sasl.password: PASSWORD
+    ssl.ca.location: /etc/ssl/certs/ca-bundle.crt
