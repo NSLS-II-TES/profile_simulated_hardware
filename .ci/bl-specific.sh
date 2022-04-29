@@ -1,23 +1,6 @@
 #!/bin/bash
 
-set -vxeo pipefail
-
-mkdir -v -p $HOME/.config/tiled/profiles/
-cat << EOF > $HOME/.config/tiled/profiles/profiles.yml
-${BEAMLINE_ACRONYM:-local}:
-  direct:
-    authentication:
-      allow_anonymous_access: true
-    trees:
-    - tree: databroker.mongo_normalized:Tree.from_uri
-      path: /
-      args:
-        uri: mongodb://localhost:27017/metadatastore-local
-        asset_registry_uri: mongodb://localhost:27017/asset-registry-local
-EOF
-
-sudo mkdir -v -p /etc/bluesky/
-sudo cp -v config/kafka.yml /etc/bluesky/kafka.yml
+set -vxeuo pipefail
 
 export USE_EPICS_IOC=1
 
