@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -vxeo pipefail
+
 export USE_EPICS_IOC=1
 
 echo -e "env inside $0"
