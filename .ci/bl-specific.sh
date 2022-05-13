@@ -22,3 +22,5 @@ else
     echo "Falling back to use caproto-spoof-beamline IOC"
 fi
 
+pip install git+https://github.com/mrakitin/ophyd@inspect-debug-info
+echo "##vso[task.setvariable variable=OPHYD_DEBUG_WITH_INSPECT;]1"

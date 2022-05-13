@@ -1,3 +1,7 @@
+print(f'Loading {__file__}...')
+
+start = ttime.monotonic()
+
 import numpy as np
 import time as ttime
 
@@ -54,3 +58,6 @@ def watch_function(motors, detector, *args, **kwargs):
 def stop_detector(detector):
     """Stop detector"""
     pass
+
+duration = ttime.monotonic() - start  # seconds
+durations[__file__] = duration

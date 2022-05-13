@@ -1,3 +1,7 @@
+print(f'Loading {__file__}...')
+
+start = ttime.monotonic()
+
 import matplotlib.pyplot as plt
 
 # from bloptools.de_opt_utils import run_hardware_fly
@@ -22,3 +26,6 @@ plt.figure()
 # RE(optimization_plan(fly_plan=run_hardware_fly, bounds=motor_bounds, db=db, motors=motor_dict,
 # detector=None, max_velocity=5, start_det=start_detector, read_det=read_detector,
 # stop_det=stop_detector, watch_func=watch_function, threshold=4.5))
+
+duration = ttime.monotonic() - start  # seconds
+durations[__file__] = duration

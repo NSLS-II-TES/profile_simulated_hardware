@@ -1,3 +1,7 @@
+print(f'Loading {__file__}...')
+
+start = ttime.monotonic()
+
 from ophyd import (EpicsSignal, EpicsMotor, Device, Component as Cpt)
 
 
@@ -21,3 +25,6 @@ for cpt in sample_stage.component_names:
     getattr(sample_stage, cpt).llm.put(-1000)
     getattr(sample_stage, cpt).hlm.put(1000)
     getattr(sample_stage, cpt).velocity.put(5.0)
+
+duration = ttime.monotonic() - start  # seconds
+durations[__file__] = duration
