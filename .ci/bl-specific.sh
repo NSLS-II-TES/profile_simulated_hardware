@@ -22,3 +22,5 @@ else
     echo "Falling back to use caproto-spoof-beamline IOC"
 fi
 
+pip install git+https://github.com/mrakitin/ophyd@inspect-debug-info
+export OPHYD_DEBUG_WITH_INSPECT=1
