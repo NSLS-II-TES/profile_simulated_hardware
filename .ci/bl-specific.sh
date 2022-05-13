@@ -23,4 +23,4 @@ else
 fi
 
 pip install git+https://github.com/mrakitin/ophyd@inspect-debug-info
-export OPHYD_DEBUG_WITH_INSPECT=1
+echo "##vso[task.setvariable variable=OPHYD_DEBUG_WITH_INSPECT;]1"
